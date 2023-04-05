@@ -187,7 +187,23 @@ data Knight = Knight
     , knightEndurance :: Int
     }
 
-dragonFight = error "TODO"
+data DragonColor 
+  = Red
+    |Black
+    |Green
+
+data Dragon = Dragon
+  {   dragonColor :: DragonColor
+    , dragonHealth :: Int
+    , dragonAttack :: Int
+  }
+
+data Chest = Chest {
+  gold :: Int,
+  treasure :: [[Char]]
+}
+
+dragonFight = Knight
 
 ----------------------------------------------------------------------------
 -- Extra Challenges
@@ -221,7 +237,7 @@ verify that.
 [1,2,3,4,7]
 -}
 merge :: [Int] -> [Int] -> [Int]
-merge = error "TODO"
+merge =  error "TODO"
 
 {- | Implement the "Merge Sort" algorithm in Haskell. The @mergeSort@
 function takes a list of numbers and returns a new list containing the
