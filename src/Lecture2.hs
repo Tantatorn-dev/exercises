@@ -41,7 +41,7 @@ module Lecture2
     ) where
 
 -- VVV If you need to import libraries, do it after this line ... VVV
-
+import Data.Char
 -- ^^^ and before this line. Otherwise the test suite might fail  ^^^
 
 {- | Implement a function that finds a product of all the numbers in
@@ -52,7 +52,12 @@ zero, you can stop calculating product and return 0 immediately.
 84
 -}
 lazyProduct :: [Int] -> Int
-lazyProduct = error "TODO"
+lazyProduct list = case list of
+  0:_ -> 0
+  x:xs -> x * lazyProduct xs
+  _ -> 1
+
+
 
 {- | Implement a function that duplicates every element in the list.
 
@@ -62,7 +67,9 @@ lazyProduct = error "TODO"
 "ccaabb"
 -}
 duplicate :: [a] -> [a]
-duplicate = error "TODO"
+duplicate list = case list of
+  x:xs -> x:x: duplicate xs
+  _ -> []  
 
 {- | Implement function that takes index and a list and removes the
 element at the given position. Additionally, this function should also
@@ -74,7 +81,15 @@ return the removed element.
 >>> removeAt 10 [1 .. 5]
 (Nothing,[1,2,3,4,5])
 -}
-removeAt = error "TODO"
+removeAt:: Int->[a]->(Maybe a, [a])
+removeAt index list
+  |index < 0 = (Nothing, list)
+  |null list = (Nothing, list)
+  |index == 0 = (Just (head list), tail list)
+  |otherwise = let
+    (removed, newList) = removeAt (index - 1) (tail list)
+    in (removed, head list : newList)
+
 
 {- | Write a function that takes a list of lists and returns only
 lists of even lengths.
@@ -85,7 +100,14 @@ lists of even lengths.
 ♫ NOTE: Use eta-reduction and function composition (the dot (.) operator)
   in this function.
 -}
-evenLists = error "TODO"
+evenLists:: [[a]] -> [[a]]
+evenLists lists = let
+  isEvenList:: [a] -> Bool
+  isEvenList= even.length
+
+  getLists = filter isEvenList
+
+  in getLists lists
 
 {- | The @dropSpaces@ function takes a string containing a single word
 or number surrounded by spaces and removes all leading and trailing
@@ -101,7 +123,8 @@ spaces.
 
 🕯 HINT: look into Data.Char and Prelude modules for functions you may use.
 -}
-dropSpaces = error "TODO"
+dropSpaces:: [Char] -> [Char]
+dropSpaces str =  takeWhile (not.isSpace) (dropWhile isSpace str)
 
 {- |
 
@@ -164,7 +187,23 @@ data Knight = Knight
     , knightEndurance :: Int
     }
 
-dragonFight = error "TODO"
+data DragonColor 
+  = Red
+    |Black
+    |Green
+
+data Dragon = Dragon
+  {   dragonColor :: DragonColor
+    , dragonHealth :: Int
+    , dragonAttack :: Int
+  }
+
+data Chest = Chest {
+  gold :: Int,
+  treasure :: [[Char]]
+}
+
+dragonFight = Knight
 
 ----------------------------------------------------------------------------
 -- Extra Challenges
@@ -198,7 +237,7 @@ verify that.
 [1,2,3,4,7]
 -}
 merge :: [Int] -> [Int] -> [Int]
-merge = error "TODO"
+merge =  error "TODO"
 
 {- | Implement the "Merge Sort" algorithm in Haskell. The @mergeSort@
 function takes a list of numbers and returns a new list containing the
