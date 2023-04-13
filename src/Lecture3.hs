@@ -33,6 +33,7 @@ module Lecture3
     , appendDiff3
     , apply
     ) where
+import Control.Concurrent (yield)
 
 -- VVV If you need to import libraries, do it after this line ... VVV
 
@@ -202,11 +203,14 @@ together only different elements.
 Product {getProduct = 6}
 
 -}
-appendDiff3:: Eq a => [a] -> [a] -> [a] -> [a]
-appendDiff3 a b c = uniq (a ++ b ++ c) where
-  uniq:: Eq a => [a] -> [a]
-  uniq [] = []
-  uniq (x:xs) = x : uniq (filter (/= x) xs)
+appendDiff3:: (Eq a, Semigroup a) => a -> a -> a -> a
+appendDiff3 x y z
+  |x == y && y == z = x
+  |x /= y && y == z = x <> y
+  |x == y && y /= z = y <> z
+  |x /= z && y == z = x <> z
+  |x == z && y /= z = z <> y
+  |otherwise = x <> y <> z
 
 {-
 
@@ -274,4 +278,4 @@ Just [8,9,10]
 [8,20,3]
 
 -}
-apply = error "TODO"
+apply val ft = ft val 
