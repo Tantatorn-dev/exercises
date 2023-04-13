@@ -52,7 +52,7 @@ data Weekday
     | Friday
     | Saturday
     | Sunday
-    deriving (Show, Eq)
+    deriving (Show, Eq, Enum)
 
 {- | Write a function that will display only the first three letters
 of a weekday.
@@ -60,7 +60,11 @@ of a weekday.
 >>> toShortString Monday
 "Mon"
 -}
-toShortString = error "TODO"
+toShortString:: Weekday -> [Char]
+toShortString d = getThreeStr (show d) where
+  getThreeStr:: [Char] -> [Char]
+  getThreeStr (a:b:c:_) = [a,b,c]
+  getThreeStr _ = ""  
 
 {- | Write a function that returns next day of the week, following the
 given day.
@@ -82,7 +86,9 @@ Tuesday
   would work for **any** enumeration type in Haskell (e.g. 'Bool',
   'Ordering') and not just 'Weekday'?
 -}
-next = error "TODO"
+next:: Weekday -> Weekday
+next Sunday = Monday
+next d = toEnum (fromEnum d + 1)
 
 {- | Implement a function that calculates number of days from the first
 weekday to the second.
@@ -92,7 +98,9 @@ weekday to the second.
 >>> daysTo Friday Wednesday
 5
 -}
-daysTo = error "TODO"
+daysTo:: Weekday -> Weekday -> Int
+daysTo Sunday d2 = fromEnum d2 + 1
+daysTo d1 d2 = abs (fromEnum d1 - fromEnum d2)
 
 {-
 
@@ -108,9 +116,13 @@ newtype Gold = Gold
 
 -- | Addition of gold coins.
 instance Semigroup Gold where
+  (<>) :: Gold -> Gold -> Gold
+  Gold a <> Gold b = Gold (a+b)
+  
 
 
 instance Monoid Gold where
+  mempty = Gold 0
 
 
 {- | A reward for completing a difficult quest says how much gold
@@ -125,9 +137,12 @@ data Reward = Reward
     } deriving (Show, Eq)
 
 instance Semigroup Reward where
+  (<>):: Reward -> Reward -> Reward
+  Reward a b <> Reward c d =  Reward (a <> c) (b||d)
 
 
 instance Monoid Reward where
+  mempty = Reward (Gold 0) False
 
 
 {- | 'List1' is a list that contains at least one element.
@@ -137,10 +152,11 @@ data List1 a = List1 a [a]
 
 -- | This should be list append.
 instance Semigroup (List1 a) where
+  (List1 x xs) <> (List1 y ys) = List1 x ((xs ++ [y])++ys)
 
 
 {- | Does 'List1' have the 'Monoid' instance? If no then why?
-
+Ans -> Because a [a] identity 'a' can't be empty
 instance Monoid (List1 a) where
 -}
 
@@ -160,10 +176,15 @@ monsters, you should get a combined treasure and not just the first
   declaration.
 -}
 instance Semigroup (Treasure a) where
+  (<>):: Treasure a -> Treasure a -> Treasure a
+  NoTreasure <> NoTreasure = NoTreasure
+  NoTreasure <> SomeTreasure a = SomeTreasure a
+  SomeTreasure a <> NoTreasure = SomeTreasure a
+  SomeTreasure a <> SomeTreasure b = SomeTreasure a
 
 
 instance Monoid (Treasure a) where
-
+  mempty=NoTreasure
 
 {- | Abstractions are less helpful if we can't write functions that
 use them!
@@ -181,7 +202,11 @@ together only different elements.
 Product {getProduct = 6}
 
 -}
-appendDiff3 = error "TODO"
+appendDiff3:: Eq a => [a] -> [a] -> [a] -> [a]
+appendDiff3 a b c = uniq (a ++ b ++ c) where
+  uniq:: Eq a => [a] -> [a]
+  uniq [] = []
+  uniq (x:xs) = x : uniq (filter (/= x) xs)
 
 {-
 
