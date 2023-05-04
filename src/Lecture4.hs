@@ -134,8 +134,27 @@ errors. We will simply return an optional result here.
 🕯 HINT: Use the 'readMaybe' function from the 'Text.Read' module.
 -}
 
+splitRow :: String -> [String]
+splitRow str = case dropWhile (== ',') str of
+  "" -> []
+  str' -> w : splitRow str''
+    where
+      (w, str'') = break (== ',') str'
+
+parseCost :: String -> Maybe Int
+parseCost costStr = case readMaybe costStr :: Maybe Int of
+  Just cost -> if cost >= 0 then Just cost else Nothing
+  Nothing -> Nothing
+
 parseRow :: String -> Maybe Row
-parseRow = error "TODO"
+parseRow rowStr = do
+   let arr = splitRow rowStr
+   case arr of 
+      [cRowProduct, cRowTradeType, cRowCost] -> do
+         rowTradeType <- readMaybe cRowTradeType :: Maybe TradeType
+         rowCost <- parseCost cRowCost
+         return Row {rowProduct = cRowProduct, rowTradeType = rowTradeType, rowCost = rowCost}
+      _ -> Nothing
 
 {-
 We have almost all we need to calculate final stats in a simple and
@@ -157,7 +176,8 @@ string.
 If both strings have the same length, return the first one.
 -}
 instance Semigroup MaxLen where
-
+   (<>):: MaxLen -> MaxLen -> MaxLen
+   (MaxLen a) <> (MaxLen b) = if length a >= length b then MaxLen a else MaxLen b
 
 {-
 It's convenient to represent our stats as a data type that has
@@ -184,6 +204,8 @@ instance for the 'Stats' type itself.
 -}
 
 instance Semigroup Stats where
+   (<>):: Stats -> Stats -> Stats
+   (Stats a1 a2 a3 a4 a5 a6 a7 a8 a9) <> (Stats b1 b2 b3 b4 b5 b6 b7 b8 b9) = Stats (a1 <> b1) (a2 <> b2) (a3 <> b3) (a4 <> b4) (a5 <> b5) (a6 <> b6) (a7 <> b7) (a8 <> b8) (a9 <> b9)
 
 
 {-
@@ -200,7 +222,10 @@ row in the file.
 -}
 
 rowToStats :: Row -> Stats
-rowToStats = error "TODO"
+rowToStats row = if rowTradeType row == Buy then
+      Stats (Sum 1) (Sum (-(rowCost row))) (Max (rowCost row)) (Min (rowCost row)) Nothing Nothing (Just (Max (rowCost row))) (Just (Min (rowCost row))) (MaxLen (rowProduct row))
+   else
+      Stats (Sum 1) (Sum (rowCost row)) (Max (rowCost row)) (Min (rowCost row)) (Just (Max (rowCost row))) (Just (Min (rowCost row))) Nothing Nothing (MaxLen (rowProduct row))
 
 {-
 Now, after we learned to convert a single row, we can convert a list of rows!
