@@ -100,9 +100,11 @@ module Lecture4
     , printProductStats
     ) where
 
-import Data.List.NonEmpty (NonEmpty (..))
+import Data.List.NonEmpty (NonEmpty (..), fromList)
 import Data.Semigroup (Max (..), Min (..), Semigroup (..), Sum (..))
 import Text.Read (readMaybe)
+import Data.Maybe
+{-# LANGUAGE OverloadedLists #-}
 
 {- In this exercise, instead of writing the entire program from
 scratch, you're offered to complete the missing parts.
@@ -134,8 +136,27 @@ errors. We will simply return an optional result here.
 🕯 HINT: Use the 'readMaybe' function from the 'Text.Read' module.
 -}
 
+splitRow :: String -> [String]
+splitRow str = case dropWhile (== ',') str of
+  "" -> []
+  str' -> w : splitRow str''
+    where
+      (w, str'') = break (== ',') str'
+
+parseCost :: String -> Maybe Int
+parseCost costStr = case readMaybe costStr :: Maybe Int of
+  Just cost -> if cost >= 0 then Just cost else Nothing
+  Nothing -> Nothing
+
 parseRow :: String -> Maybe Row
-parseRow = error "TODO"
+parseRow rowStr = do
+   let arr = splitRow rowStr
+   case arr of 
+      [cRowProduct, cRowTradeType, cRowCost] -> do
+         rowTradeType <- readMaybe cRowTradeType :: Maybe TradeType
+         rowCost <- parseCost cRowCost
+         return Row {rowProduct = cRowProduct, rowTradeType = rowTradeType, rowCost = rowCost}
+      _ -> Nothing
 
 {-
 We have almost all we need to calculate final stats in a simple and
@@ -157,7 +178,8 @@ string.
 If both strings have the same length, return the first one.
 -}
 instance Semigroup MaxLen where
-
+   (<>):: MaxLen -> MaxLen -> MaxLen
+   (MaxLen a) <> (MaxLen b) = if length a >= length b then MaxLen a else MaxLen b
 
 {-
 It's convenient to represent our stats as a data type that has
@@ -184,6 +206,8 @@ instance for the 'Stats' type itself.
 -}
 
 instance Semigroup Stats where
+   (<>):: Stats -> Stats -> Stats
+   (Stats a1 a2 a3 a4 a5 a6 a7 a8 a9) <> (Stats b1 b2 b3 b4 b5 b6 b7 b8 b9) = Stats (a1 <> b1) (a2 <> b2) (a3 <> b3) (a4 <> b4) (a5 <> b5) (a6 <> b6) (a7 <> b7) (a8 <> b8) (a9 <> b9)
 
 
 {-
@@ -200,7 +224,10 @@ row in the file.
 -}
 
 rowToStats :: Row -> Stats
-rowToStats = error "TODO"
+rowToStats row = if rowTradeType row == Buy then
+      Stats (Sum 1) (Sum (-(rowCost row))) (Max (rowCost row)) (Min (rowCost row)) Nothing Nothing (Just (Max (rowCost row))) (Just (Min (rowCost row))) (MaxLen (rowProduct row))
+   else
+      Stats (Sum 1) (Sum (rowCost row)) (Max (rowCost row)) (Min (rowCost row)) (Just (Max (rowCost row))) (Just (Min (rowCost row))) Nothing Nothing (MaxLen (rowProduct row))
 
 {-
 Now, after we learned to convert a single row, we can convert a list of rows!
@@ -226,7 +253,7 @@ implement the next task.
 -}
 
 combineRows :: NonEmpty Row -> Stats
-combineRows = error "TODO"
+combineRows row = sconcat (fmap rowToStats row)
 
 {-
 After we've calculated stats for all rows, we can then pretty-print
@@ -237,7 +264,16 @@ you can return string "no value".
 -}
 
 displayStats :: Stats -> String
-displayStats = error "TODO"
+displayStats stat = 
+   "Total positions        : " ++ show (getSum (statsTotalPositions stat)) ++ "\n" ++
+   "Total final balance    : " ++ show (getSum (statsTotalSum stat)) ++ "\n" ++
+   "Biggest absolute cost  : " ++ show (getMax (statsAbsoluteMax stat)) ++ "\n" ++
+   "Smallest absolute cost : " ++ show (getMin (statsAbsoluteMin stat)) ++ "\n" ++
+   "Max earning            : " ++ show (getMax (fromMaybe 0 (statsSellMax stat))) ++ "\n" ++
+   "Min earning            : " ++ show (getMin (fromMaybe 0 (statsSellMin stat))) ++ "\n" ++
+   "Max spending           : " ++ show (getMax (fromMaybe 0 (statsBuyMax stat))) ++ "\n" ++
+   "Min spending           : " ++ show (getMin (fromMaybe 0 (statsBuyMin stat))) ++ "\n" ++
+   "Longest product name   : " ++  unMaxLen (statsLongest stat) ++ "\n"
 
 {-
 Now, we definitely have all the pieces in places! We can write a
@@ -257,7 +293,9 @@ the file doesn't have any products.
 -}
 
 calculateStats :: String -> String
-calculateStats = error "TODO"
+calculateStats str = if null (lines str) then 
+   "File doesn't have any products" 
+   else displayStats (combineRows (fromList (mapMaybe parseRow (lines str))))
 
 {- The only thing left is to write a function with side-effects that
 takes a path to a file, reads its content, calculates stats and prints
@@ -267,7 +305,9 @@ Use functions 'readFile' and 'putStrLn' here.
 -}
 
 printProductStats :: FilePath -> IO ()
-printProductStats = error "TODO"
+printProductStats filepath = do
+   content <- readFile filepath
+   putStrLn (calculateStats content)
 
 {-
 Okay, I lied. This is not the last thing. Now, we need to wrap
