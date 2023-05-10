@@ -100,9 +100,11 @@ module Lecture4
     , printProductStats
     ) where
 
-import Data.List.NonEmpty (NonEmpty (..))
+import Data.List.NonEmpty (NonEmpty (..), fromList)
 import Data.Semigroup (Max (..), Min (..), Semigroup (..), Sum (..))
 import Text.Read (readMaybe)
+import Data.Maybe
+{-# LANGUAGE OverloadedLists #-}
 
 {- In this exercise, instead of writing the entire program from
 scratch, you're offered to complete the missing parts.
@@ -251,7 +253,7 @@ implement the next task.
 -}
 
 combineRows :: NonEmpty Row -> Stats
-combineRows = error "TODO"
+combineRows row = sconcat (fmap rowToStats row)
 
 {-
 After we've calculated stats for all rows, we can then pretty-print
@@ -262,7 +264,16 @@ you can return string "no value".
 -}
 
 displayStats :: Stats -> String
-displayStats = error "TODO"
+displayStats stat = 
+   "Total positions        : " ++ show (getSum (statsTotalPositions stat)) ++ "\n" ++
+   "Total final balance    : " ++ show (getSum (statsTotalSum stat)) ++ "\n" ++
+   "Biggest absolute cost  : " ++ show (getMax (statsAbsoluteMax stat)) ++ "\n" ++
+   "Smallest absolute cost : " ++ show (getMin (statsAbsoluteMin stat)) ++ "\n" ++
+   "Max earning            : " ++ show (getMax (fromMaybe 0 (statsSellMax stat))) ++ "\n" ++
+   "Min earning            : " ++ show (getMin (fromMaybe 0 (statsSellMin stat))) ++ "\n" ++
+   "Max spending           : " ++ show (getMax (fromMaybe 0 (statsBuyMax stat))) ++ "\n" ++
+   "Min spending           : " ++ show (getMin (fromMaybe 0 (statsBuyMin stat))) ++ "\n" ++
+   "Longest product name   : " ++  unMaxLen (statsLongest stat) ++ "\n"
 
 {-
 Now, we definitely have all the pieces in places! We can write a
@@ -282,7 +293,9 @@ the file doesn't have any products.
 -}
 
 calculateStats :: String -> String
-calculateStats = error "TODO"
+calculateStats str = if null (lines str) then 
+   "File doesn't have any products" 
+   else displayStats (combineRows (fromList (mapMaybe parseRow (lines str))))
 
 {- The only thing left is to write a function with side-effects that
 takes a path to a file, reads its content, calculates stats and prints
@@ -292,7 +305,9 @@ Use functions 'readFile' and 'putStrLn' here.
 -}
 
 printProductStats :: FilePath -> IO ()
-printProductStats = error "TODO"
+printProductStats filepath = do
+   content <- readFile filepath
+   putStrLn (calculateStats content)
 
 {-
 Okay, I lied. This is not the last thing. Now, we need to wrap
